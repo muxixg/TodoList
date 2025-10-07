@@ -1,0 +1,8 @@
+serverdatas:
+  host: localhost
+  port: 8000
+sqldatas:
+  host: localhost
+  port: 3306
+  user: root
+  password: 123456

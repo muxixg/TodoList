@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -23,24 +24,28 @@ type ServerConfig struct {
 	Port string `yaml:"port"`
 }
 
-func Openfile(filename string) (file *os.File) {
-	file, err := os.Open(filename)
+func Getdsn() (dsn string) {
+	//file := Openfile("config.yaml")
+	file, err := os.Open("config.yaml")
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	defer file.Close()
-	return
-}
-
-func Getdsn() (dsn string) {
-	file := Openfile("config.yaml")
 	decoder := yaml.NewDecoder(file)
 	var Config Config
-	err := decoder.Decode(&Config)
+	err = decoder.Decode(&Config)
 	if err != nil {
 		log.Println("Error decoding YAML:", err)
 	}
-	dsn = Config.Sqldata.User + ":" + Config.Sqldata.Password + "@tcp(" + Config.Sqldata.Host + ":" + Config.Sqldata.Port + ")/test?charset=utf8mb4&parseTime=True&loc=Local"
+	//dsn = Config.Sqldata.User + ":" + Config.Sqldata.Password + "@tcp(" + Config.Sqldata.Host + ":" + Config.Sqldata.Port + ")/test?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/test?charset=utf8mb4&parseTime=True&loc=Local",
+		Config.Sqldata.User,
+		Config.Sqldata.Password,
+		Config.Sqldata.Host,
+		Config.Sqldata.Port,
+	)
+	//log.Println(Config)
+	//log.Println(dsn)
 	return
 }

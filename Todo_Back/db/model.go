@@ -1,13 +1,14 @@
 package db
 
 import (
+	"Todo/config"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 // 全局变量
-// var dsn string = config.Getdsn()
-var dsn = "root:123456@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
+var dsn string = config.Getdsn()
 
 // 结构体
 type Todo struct { //List的结构体

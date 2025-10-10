@@ -9,12 +9,25 @@ import (
 	"github.com/google/uuid"
 )
 
+func okCORS(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, r)
+	}
+}
+
 func main() {
 	db.Init()
-	http.HandleFunc("/get-all", GetList)
-	http.HandleFunc("/add", AddList)
-	http.HandleFunc("/move", MoveList)
-	http.HandleFunc("/update", UpdateList)
+	http.HandleFunc("/get-all", okCORS(GetList))
+	http.HandleFunc("/add", okCORS(AddList))
+	http.HandleFunc("/move", okCORS(MoveList))
+	http.HandleFunc("/update", okCORS(UpdateList))
 	log.Println("Starting server on :8000")
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }

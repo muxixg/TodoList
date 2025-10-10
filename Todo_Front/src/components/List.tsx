@@ -28,7 +28,7 @@ function GetTodolist(): Promise<DataType[]> {
 }
 
 function DeleteTodolist(id: string) {
-    axios
+    return axios
         .post(BaseApi + '/move', {id})
         .then(() => GetTodolist())
         .catch(err => {
@@ -58,6 +58,14 @@ const List = () => {
     const handleUpdate = async (x: DataType) => {
         try {
             await UpdateTodolist(x)
+            await fetchData();
+        } catch (err) {
+            console.log('更新失败：', err)
+        }
+    }
+    const handleDelete = async (x: DataType) => {
+        try {
+            await DeleteTodolist(x.id)
             await fetchData();
         } catch (err) {
             console.log('更新失败：', err)
@@ -97,7 +105,7 @@ const List = () => {
             render: (_, record) => (
                 <Space size="middle">
                     <Button type="primary" shape="circle" onClick={() => {
-                        DeleteTodolist(record.id)
+                        handleDelete(record);
                     }}>
                         X
                     </Button>
@@ -108,7 +116,7 @@ const List = () => {
                         ✓
                     </Button>
                     <Button type="primary" shape="round" onClick={() => {
-
+                        handleUpdate({...record})
                     }}>
                         Change
                     </Button>

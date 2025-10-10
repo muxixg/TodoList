@@ -1,36 +1,13 @@
-import {Space, Table} from 'antd';
+import {Space, Table, Button, Modal, Form, Input, message} from 'antd';
 import type {TableProps} from 'antd';
-import {Button} from 'antd';
-import {useState, useEffect} from 'react';
 import axios from 'axios';
+import {type DataType, BaseApi} from "../global/todolistDatatype"
+import {useState} from "react";
 
-interface DataType {
-    id: string;
-    user: string
-    name: string;
-    description: string;
-    completed: boolean;
-}
-
-const BaseApi = 'http://localhost:8000'
-
-function GetTodolist(): Promise<DataType[]> {
-    return axios
-        .get(BaseApi + '/get-all')
-        .then(res => {
-            console.log('成功获取list数据')
-            // return res.data
-            return res.data;
-        })
-        .catch(err => {
-            console.log('请求失败：', err)
-        })
-}
-
+//一般方法
 function DeleteTodolist(id: string) {
     return axios
         .post(BaseApi + '/move', {id})
-        .then(() => GetTodolist())
         .catch(err => {
             console.log(err)
         })
@@ -44,21 +21,68 @@ function UpdateTodolist(dat: DataType) {
         })
 }
 
-const List = () => {
-    //数据定义与初始化
-    const [data, setData] = useState<DataType[]>([]);
-    const fetchData = async () => {
-        const result = await GetTodolist();
-        setData(result);
-    };
-    useEffect(() => {
-        fetchData();
-    }, []);
+
+const List = ({data, reload}: {
+                  data: DataType[],
+                  reload: () => void
+              }
+) => {
     //方法定义
+    //弹窗的方法：
+    const [loading, setLoading] = useState(false);
+    const [open, setOpen] = useState(false);
+    const [form] = Form.useForm();
+    const [recordnow, setRecordnow] = useState<DataType>({
+        id: "",
+        user: "TestUser",
+        name: "",
+        description: "",
+        completed: false,
+    });
+
+
+    const showModal = (record: DataType) => {
+        setOpen(true);
+        setRecordnow( record)
+        form.setFieldsValue({
+            name: record.name,
+            description: record.description,
+        });
+    };
+
+    const handleCancel = () => {
+        setOpen(false);
+    };
+
+    const handleChange = async () => {
+        setLoading(true);
+        try {
+            const values = form.getFieldsValue();
+            // console.log(values.name,values.description)
+            // console.log(recordnow)
+            const x: DataType = {
+                id: recordnow.id,
+                user: "TestUser",
+                name: values.name===undefined?recordnow.name:values.name.toString(),
+                description: values.description===undefined?recordnow.name:values.description.toString(),
+                completed: recordnow.completed,
+            }
+            // console.log(x)
+            await UpdateTodolist(x)
+            await reload();
+            setLoading(false);
+            setOpen(false);
+        } catch (err) {
+            setLoading(false);
+            setOpen(false);
+            message.info('添加失败：' + err);
+            console.log('添加失败：', err)
+        }
+    }
     const handleUpdate = async (x: DataType) => {
         try {
             await UpdateTodolist(x)
-            await fetchData();
+            await reload();
         } catch (err) {
             console.log('更新失败：', err)
         }
@@ -66,18 +90,19 @@ const List = () => {
     const handleDelete = async (x: DataType) => {
         try {
             await DeleteTodolist(x.id)
-            await fetchData();
+            await reload();
         } catch (err) {
             console.log('更新失败：', err)
         }
     }
+
     //表单
     const columns: TableProps<DataType>['columns'] = [
         {
             title: 'Index',
             key: 'index',
-            render: (record) => {
-                return record.index + 1
+            render: (_, _record, index) => {
+                return index + 1;
             }
         },
         {
@@ -116,7 +141,7 @@ const List = () => {
                         ✓
                     </Button>
                     <Button type="primary" shape="round" onClick={() => {
-                        handleUpdate({...record})
+                        showModal(record)
                     }}>
                         Change
                     </Button>
@@ -124,9 +149,62 @@ const List = () => {
             ),
         },
     ];
+
+//表单方法：
+
+    type FieldType = {
+        name?: string;
+        description?: string;
+    };
+
     return (
         <>
-            <Table<DataType> columns={columns} dataSource={data}/>
+            <Table<DataType> columns={columns} dataSource={data.map((item, index) => ({...item, key: index}))}
+                             className="min-h-2/3 mx-auto "/>
+            <div>
+                <Modal
+                    open={open}
+                    title="添加TODO任务"
+                    onOk={handleChange}
+                    onCancel={handleCancel}
+                    footer={[
+                        <Button key="back" onClick={handleCancel}>
+                            取消
+                        </Button>,
+                        <Button key="submit" type="primary" loading={loading} onClick={handleChange}>
+                            修改
+                        </Button>,
+                    ]}
+                >
+                    <div>
+                        <Form
+                            form={form}
+                            name="basic"
+                            labelCol={{span: 8}}
+                            wrapperCol={{span: 16}}
+                            style={{maxWidth: 600}}
+                            initialValues={{remember: false}}
+                            autoComplete="off"
+                        >
+                            <Form.Item<FieldType>
+                                label="Todoname"
+                                name="name"
+                                rules={[{required: false, message: 'Please input your Todo_name!'}]}
+                            >
+                                <Input />
+                            </Form.Item>
+
+                            <Form.Item<FieldType>
+                                label="description"
+                                name="description"
+                                rules={[{required: false, message: 'Please input your description'}]}
+                            >
+                                <Input/>
+                            </Form.Item>
+                        </Form>
+                    </div>
+                </Modal>
+            </div>
         </>
     )
 }

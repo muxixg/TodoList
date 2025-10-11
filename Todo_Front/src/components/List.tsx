@@ -164,7 +164,7 @@ const List = ({data, reload}: {
             <div>
                 <Modal
                     open={open}
-                    title="添加TODO任务"
+                    title="修改TODO任务"
                     onOk={handleChange}
                     onCancel={handleCancel}
                     footer={[
@@ -208,6 +208,4 @@ const List = ({data, reload}: {
         </>
     )
 }
-
-
 export default List;
